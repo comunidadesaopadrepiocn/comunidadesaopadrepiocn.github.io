@@ -1,0 +1,65 @@
+
+name: Deploy Site Igreja
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Baixar código do backend privado
+        uses: actions/checkout@v7
+        with:
+          repository: comunidadesaopadrepiocn/siteIgrejaBackend
+          token: ${{ secrets.BACKEND_REPO_TOKEN }}
+          path: source
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: source/package-lock.json
+
+      - name: Instalar dependências
+        working-directory: source
+        run: npm ci
+
+      - name: Compilar Angular
+        working-directory: source
+        run: npm run build -- --base-href /igrejaSaoPadrePio.github.io/
+
+      - name: Configurar GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Preparar arquivos para publicação
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: source/dist/site-igreja/browser
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Publicar site
+        id: deployment
+        uses: actions/deploy-pages@v4
