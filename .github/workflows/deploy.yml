@@ -47,6 +47,11 @@ jobs:
         uses: actions/configure-pages@v5
 
       - name: Preparar arquivos para publicação
+        run: |
+          cp source/dist/site-igreja/browser/index.html source/dist/site-igreja/browser/404.html
+          touch source/dist/site-igreja/browser/.nojekyll
+
+      - name: Enviar arquivos para publicação
         uses: actions/upload-pages-artifact@v4
         with:
           path: source/dist/site-igreja/browser
